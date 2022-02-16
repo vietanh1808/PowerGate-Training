@@ -14,6 +14,7 @@ const setLocaleAction = createCustomAction('setLocale', (locale: string) => ({
   locale,
 }));
 
+
 const actions = { setLocale };
 
 type Action = ActionType<typeof actions>;

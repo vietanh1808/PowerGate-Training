@@ -29,7 +29,7 @@ export function fetchThunk(
 
     const json = await res.json();
 
-    if (res.status === RESPONSE_STATUS_UNAUTHORIZED) {
+    if (res.status === RESPONSE_STATUS_UNAUTHORIZED) {  // Không lấy được token
       // dispatch logout, remove access token here.
     }
 

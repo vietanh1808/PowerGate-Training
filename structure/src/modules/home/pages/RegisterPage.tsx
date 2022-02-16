@@ -41,8 +41,6 @@ const RegisterPage = (props: Props) => {
     setErrorMessage('');
     setLoading(true);
 
-    console.log(values);
-
     const json = await dispatch(
       fetchThunk(API_PATHS.signUp, 'post', {
         email: values.email,
