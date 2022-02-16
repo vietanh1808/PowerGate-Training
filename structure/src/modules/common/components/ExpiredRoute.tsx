@@ -3,8 +3,6 @@ import { Redirect, Route, RouteProps } from 'react-router-dom';
 import { ROUTES } from '../../../configs/routes';
 import Cookies from 'js-cookie';
 import { ACCESS_TOKEN_KEY } from '../../../utils/constants';
-import { useSelector } from 'react-redux';
-import { AppState } from '../../../redux/reducer';
 
 interface Props extends RouteProps {}
 
