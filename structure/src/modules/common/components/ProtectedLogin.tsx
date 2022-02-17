@@ -6,21 +6,21 @@ import { ACCESS_TOKEN_KEY } from '../../../utils/constants';
 
 interface Props extends RouteProps {}
 
-const ProtectedRoute = (props: Props) => {
+const ProtectedLogin = (props: Props) => {
   const { ...rest } = props;
   const auth = Cookies.get(ACCESS_TOKEN_KEY);
 
-  if (auth) {
+  if (!auth) {
     return <Route {...rest} />;
   }
 
   return (
     <Redirect
       to={{
-        pathname: ROUTES.login,
+        pathname: ROUTES.home,
       }}
     />
   );
 };
 
-export default ProtectedRoute;
+export default ProtectedLogin;

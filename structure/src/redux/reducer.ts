@@ -1,7 +1,6 @@
 import { connectRouter, RouterState } from 'connected-react-router';
 import { History } from 'history';
 import { combineReducers } from 'redux';
-import { IItemParams } from '../models/item';
 import authReducer, { AuthState } from '../modules/auth/redux/authReducer';
 import itemReducer, { ItemState } from '../modules/home/redux/itemReducer';
 import intlReducer, { IntlState } from '../modules/intl/redux/intlReducer';

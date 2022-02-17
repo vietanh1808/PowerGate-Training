@@ -4,10 +4,15 @@ import { ThunkDispatch } from 'redux-thunk';
 import { Action } from 'typesafe-actions';
 import { IItemParams } from '../../../models/item';
 import { AppState } from '../../../redux/reducer';
-import { RESPONSE_STATUS_SUCCESS } from '../../../utils/httpResponseCode';
 import { fetchThunk } from '../../common/redux/thunk';
 import ListItem from '../components/ListItem';
 import { setPhoto } from '../redux/itemReducer';
+import Cookies from 'js-cookie';
+import { ACCESS_TOKEN_KEY } from '../../../utils/constants';
+import { replace } from 'connected-react-router';
+import { ROUTES } from '../../../configs/routes';
+import { setUserInfo } from '../../auth/redux/authReducer';
+import { useParams } from 'react-router';
 
 interface Props {}
 
@@ -16,9 +21,11 @@ const nextIndexItem = 9;
 const HomePage = (props: Props) => {
   const dispatch = useDispatch<ThunkDispatch<AppState, null, Action<string>>>();
   const photo = useSelector((state: AppState) => state.items.photo);
+  const id = useParams();
 
   const [clonePhoto, setClonePhoto] = useState<Array<IItemParams>>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingPage, setLoadingPage] = useState(false);
   const [disableButton, setDisableButton] = useState(true);
   const divEndPageRef = useRef<HTMLDivElement>(null);
   const [currentIndexItem, setCurrentIndexItem] = useState(0);
@@ -83,9 +90,22 @@ const HomePage = (props: Props) => {
     }
   }, [dispatch]);
 
+  const handleLogout = () => {
+    setLoading(true);
+    Cookies.remove(ACCESS_TOKEN_KEY);
+    dispatch(replace(ROUTES.login));
+    setLoading(false);
+  };
+
+  const handleClickDetail = () => {
+    dispatch(replace(ROUTES.detailUser + `/:${1}`));
+  };
+
   useEffect(() => {
     window.addEventListener('scroll', listenToScroll);
+    setLoadingPage(true);
     fetchData();
+    setLoadingPage(false);
     return () => {
       window.removeEventListener('scroll', listenToScroll);
     };
@@ -93,29 +113,45 @@ const HomePage = (props: Props) => {
 
   return (
     <div className="container mt-3 justify-content-center" style={{ width: '100%', maxWidth: 500, borderWidth: 1 }}>
-      <div className="d-flex justify-content-end">
-        <button disabled={disableButton} type="button" className="btn btn-primary m-2" onClick={handleConfirm}>
-          Confirm
-        </button>
-        <button type="button" className="btn btn-primary m-2" onClick={handleReset}>
-          Reset
-        </button>
-      </div>
-      {clonePhoto.map((element, index) => (
-        <ListItem
-          onChangeText={handleChangeText}
-          key={index}
-          index={index}
-          thumbnail={element.thumbnailUrl}
-          title={element.title}
-        />
-      ))}
-      {loading === true ? (
+      {loadingPage === true ? (
         <div className="spinner-border justify-content-center" role="status">
           <span className="sr-only"></span>
         </div>
       ) : (
-        <div ref={divEndPageRef}>End of Page</div>
+        <div>
+          <div className="row">
+            <div className="col">
+              <button type="button" className="btn btn-primary m-2" onClick={handleLogout}>
+                Logout
+              </button>
+            </div>
+            <div className="col">
+              <button disabled={disableButton} type="button" className="btn btn-primary m-2" onClick={handleConfirm}>
+                Confirm
+              </button>
+              <button type="button" className="btn btn-primary m-2" onClick={handleReset}>
+                Reset
+              </button>
+            </div>
+          </div>
+          {clonePhoto.map((element, index) => (
+            <ListItem
+              onClick={handleClickDetail}
+              onChangeText={handleChangeText}
+              key={index}
+              index={index}
+              thumbnail={element.thumbnailUrl}
+              title={element.title}
+            />
+          ))}
+          {loading === true ? (
+            <div className="spinner-border justify-content-center" role="status">
+              <span className="sr-only"></span>
+            </div>
+          ) : (
+            <div>End of Page</div>
+          )}
+        </div>
       )}
     </div>
   );
