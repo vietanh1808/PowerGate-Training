@@ -5,11 +5,10 @@ interface Props {
   thumbnail: string;
   title: string;
   onChangeText: (text: string, index: number) => void;
-  onClick: () => void;
 }
 
 const ListItem = (props: Props) => {
-  const { index, thumbnail, title, onChangeText, onClick } = props;
+  const { index, thumbnail, title, onChangeText } = props;
 
   const handleChange = (e: any) => {
     onChangeText(e.target.value, index);
@@ -23,7 +22,6 @@ const ListItem = (props: Props) => {
     <div
       className="d-flex justify-content-around mb-3  "
       style={{ backgroundColor: index % 2 === 0 ? 'grey' : 'white', border: 1, alignItems: 'center' }}
-      onClick={onClick}
     >
       <div className="">
         <img src={thumbnail} width={100} height={100} />

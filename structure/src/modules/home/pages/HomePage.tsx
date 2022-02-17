@@ -11,8 +11,7 @@ import Cookies from 'js-cookie';
 import { ACCESS_TOKEN_KEY } from '../../../utils/constants';
 import { replace } from 'connected-react-router';
 import { ROUTES } from '../../../configs/routes';
-import { setUserInfo } from '../../auth/redux/authReducer';
-import { useParams } from 'react-router';
+import { clearUserInfo } from '../../auth/redux/authReducer';
 
 interface Props {}
 
@@ -21,13 +20,12 @@ const nextIndexItem = 9;
 const HomePage = (props: Props) => {
   const dispatch = useDispatch<ThunkDispatch<AppState, null, Action<string>>>();
   const photo = useSelector((state: AppState) => state.items.photo);
-  const id = useParams();
+  const profile = useSelector((state: AppState) => state.profile);
 
   const [clonePhoto, setClonePhoto] = useState<Array<IItemParams>>([]);
   const [loading, setLoading] = useState(false);
   const [loadingPage, setLoadingPage] = useState(false);
   const [disableButton, setDisableButton] = useState(true);
-  const divEndPageRef = useRef<HTMLDivElement>(null);
   const [currentIndexItem, setCurrentIndexItem] = useState(0);
 
   const handleConfirm = () => {
@@ -93,12 +91,13 @@ const HomePage = (props: Props) => {
   const handleLogout = () => {
     setLoading(true);
     Cookies.remove(ACCESS_TOKEN_KEY);
+    dispatch(clearUserInfo(profile));
     dispatch(replace(ROUTES.login));
     setLoading(false);
   };
 
   const handleClickDetail = () => {
-    dispatch(replace(ROUTES.detailUser + `/:${1}`));
+    dispatch(replace(ROUTES.detailUser));
   };
 
   useEffect(() => {
@@ -121,6 +120,9 @@ const HomePage = (props: Props) => {
         <div>
           <div className="row">
             <div className="col">
+              <button type="button" className="btn btn-primary m-2" onClick={handleClickDetail}>
+                Profile
+              </button>
               <button type="button" className="btn btn-primary m-2" onClick={handleLogout}>
                 Logout
               </button>
@@ -136,7 +138,6 @@ const HomePage = (props: Props) => {
           </div>
           {clonePhoto.map((element, index) => (
             <ListItem
-              onClick={handleClickDetail}
               onChangeText={handleChangeText}
               key={index}
               index={index}
