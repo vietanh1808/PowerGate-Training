@@ -20,11 +20,11 @@ const ListItem = (props: Props) => {
 
   return (
     <div
-      className="d-flex justify-content-around mb-3  "
+      className="d-flex justify-content-around mb-3 rounded p-2"
       style={{ backgroundColor: index % 2 === 0 ? 'grey' : 'white', border: 1, alignItems: 'center' }}
     >
       <div className="">
-        <img src={thumbnail} width={100} height={100} />
+        <img className="rounded-circle" src={thumbnail} width={100} height={100} />
       </div>
       <div className="">
         <input
