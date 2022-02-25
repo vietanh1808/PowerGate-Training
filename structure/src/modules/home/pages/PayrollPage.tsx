@@ -1,9 +1,9 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import ReactPaginate from 'react-paginate';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { Action } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
-import { IPayrollItem } from '../../../models/payroll';
+import { IPayrollItem, ITotal, IUpdatePayroll } from '../../../models/payroll';
 import { AppState } from '../../../redux/reducer';
 import DatePicker from '../components/payroll/DatePicker';
 import ModalDelete from '../components/payroll/ModalDelete';
@@ -12,47 +12,184 @@ import { LIST_PAYROLL } from '../contants/mock_data';
 import { status } from '../constants';
 import { setPayroll } from '../redux/payrollReducer';
 import { validColorStatus, validDate, validStatus, validTotal } from '../utils';
+import ModalViewDetail from '../components/payroll/ModalViewDetail';
+import moment from 'moment';
 
-interface IPayrollFilter {
-  status: string;
-  client: string;
-  date_begin: string;
-  date_end: string;
-  invoice: string;
-}
+const InitialForm = {
+  status: '',
+  client: '',
+  date_begin: '',
+  date_end: '',
+  invoice: '',
+  currency: '',
+};
 
 const numberItemPage = 10;
 
 const PayrollPage = () => {
   const dispatch = useDispatch<ThunkDispatch<AppState, null, Action<string>>>();
+  const payrollStore = useSelector((state: AppState) => state.payrolls.payroll);
 
   const [currentItems, setCurrentItems] = useState<IPayrollItem[]>([]);
   const [pageNumber, setPageNumber] = useState(0);
   const [itemOffset, setItemOffset] = useState(0);
   const [showModal, setShowModal] = useState(false);
-  const [dateValueFrom, setDateValueFrom] = useState<string>('');
-  const [dateValueTo, setDateValueTo] = useState<string>('');
-  const [selectValue, setSelectValue] = useState('');
+  const [showDetailModal, setShowDetailModal] = useState(false);
   const [payrolls, setPayrolls] = useState<IPayrollItem[]>([]);
-  const [formFilter, setFormFilter] = useState({
-    status: '',
-    client: '',
-    date_begin: '',
-    date_end: '',
-    invoice: '',
-  });
+  const [formFilter, setFormFilter] = useState(InitialForm);
+  const [enableFilter, setEnableFilter] = useState(false);
+  const [indexChoosed, setIndexChoosed] = useState(0);
+  const [totalField, setTotalField] = useState<ITotal[]>([]);
 
   const fetchData = async () => {
     const data1 = LIST_PAYROLL.payrolls;
     const list: any = [];
+    const listTotal: any = [];
     data1.slice(0, 50).map((d, i) => {
       const status = validStatus({ ...d });
-      const date = validDate({ ...d });
-      const total = validTotal({ ...d });
-      list.push({ status: status, date: date, total: total, client: '', currency: d.currency, invoice: d.payroll_id });
+      const total = d.fees + d.volume_input_in_input_currency;
+      listTotal.push({
+        fees: d.fees,
+        volume_input_in_input_currency: d.volume_input_in_input_currency,
+      });
+
+      list.push({
+        status: status,
+        date: d.time_created,
+        total: total,
+        client: '',
+        currency: d.currency,
+        invoice: d.payroll_id,
+      });
     });
     setPayrolls(list);
+    setTotalField(listTotal);
     // dispatch Payroll Item here
+    dispatch(setPayroll(list));
+  };
+
+  const handlePageClick = (event: any) => {
+    const newOffset = (event.selected * numberItemPage) % payrolls.length;
+    setItemOffset(newOffset);
+  };
+
+  const handleDelete = () => {
+    setShowModal(!showModal);
+  };
+
+  const handleSave = () => {
+    payrolls.splice(indexChoosed, 1);
+    setShowModal(!showModal);
+  };
+
+  const handleChangeValueForm = (e: any) => {
+    switch (e.target.id) {
+      case 'Invoice':
+        setFormFilter({ ...formFilter, invoice: e.target.value });
+        break;
+      case 'Client':
+        setFormFilter({ ...formFilter, client: e.currentTarget.value });
+        break;
+      case 'Status':
+        setFormFilter({ ...formFilter, status: e.currentTarget.value });
+        break;
+      case 'From':
+        setFormFilter({ ...formFilter, date_begin: e.currentTarget.value });
+        break;
+      case 'To':
+        setFormFilter({ ...formFilter, date_end: e.currentTarget.value });
+        break;
+      default:
+        break;
+    }
+  };
+
+  const handleClickHeadTable = useCallback(
+    (event: React.MouseEvent<HTMLTableHeaderCellElement, MouseEvent>) => {
+      const clonetItem = [...payrolls];
+      clonetItem.sort((a, b) => {
+        const index = Object.keys(a).findIndex((element) => element === event.currentTarget.id);
+        const left = Object.values(a)[index].toUpperCase();
+        const right = Object.values(b)[index].toUpperCase();
+        if (left < right) {
+          return -1;
+        }
+        if (left > right) {
+          return 1;
+        }
+        return 0;
+      });
+      setPayrolls(clonetItem);
+    },
+    [payrolls],
+  );
+
+  const handleClear = () => {
+    setFormFilter(InitialForm);
+    setPayrolls(payrollStore);
+  };
+
+  const handleApply = () => {
+    if (!enableFilter) return;
+
+    let dateFrom, dateTo, dateCompare;
+    const filtedItems = payrolls.filter((item) => {
+      if (formFilter.status) {
+        if (item.status.toUpperCase() === formFilter.status.toUpperCase()) {
+          return true;
+        }
+      }
+
+      dateFrom = new Date(formFilter.date_begin);
+      dateTo = new Date(formFilter.date_end);
+      dateCompare = new Date(item.date);
+      if (dateFrom) {
+        if (dateTo) {
+          if (dateFrom <= dateCompare && dateTo >= dateCompare) {
+            return true;
+          }
+        } else if (dateFrom <= dateCompare) {
+          return true;
+        }
+      } else if (dateTo) {
+        if (dateTo >= dateCompare) {
+          return true;
+        }
+      }
+
+      if (formFilter.invoice) {
+        if (item.invoice.includes(formFilter.invoice.trim())) {
+          return true;
+        }
+      }
+
+      return false;
+    });
+    setPayrolls(filtedItems);
+    setEnableFilter(false);
+  };
+
+  const handleChangeForm = (e: any) => {
+    setEnableFilter(true);
+  };
+
+  const handleViewDetail = (index: number) => (e: any) => {
+    setIndexChoosed(index);
+    setShowDetailModal(true);
+  };
+
+  const handleSaveDetail = (data: IUpdatePayroll) => {
+    payrolls[indexChoosed] = {
+      status: data.status,
+      client: data.client,
+      currency: data.currency,
+      total: data.fees + data.volume_input_in_input_currency,
+      invoice: data.invoice,
+      date: moment(data.date).format(),
+    };
+  };
+  const handleHideDetail = () => {
+    setShowDetailModal(false);
   };
 
   useEffect(() => {
@@ -65,56 +202,23 @@ const PayrollPage = () => {
     setPageNumber(Math.ceil(payrolls.length / numberItemPage));
   }, [itemOffset, numberItemPage, payrolls]);
 
-  const handlePageClick = (event: any) => {
-    const newOffset = (event.selected * numberItemPage) % payrolls.length;
-    setItemOffset(newOffset);
-  };
-
-  const handleDelete = () => {
-    setShowModal(!showModal);
-  };
-
-  const handleSave = () => {
-    setShowModal(!showModal);
-  };
-
-  const handleChangeDateFrom = useCallback((event: any) => {
-    setDateValueFrom(event.target.value);
-  }, []);
-
-  const handleChangeDateTo = useCallback((event: any) => {
-    setDateValueTo(event.target.value);
-  }, []);
-
-  const handleChangeSelectStatus = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectValue(event.target.value);
-  };
-
-  const handleChangeSelectClient = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectValue(event.target.value);
-  };
-
-  const handleClickHeadTable = (event: React.MouseEvent<HTMLTableHeaderCellElement, MouseEvent>) => {
-    currentItems.sort((a, b) => {
-      const index = Object.keys(a).findIndex((element) => element === event.currentTarget.id);
-      const left = Object.values(a)[index].toUpperCase();
-      const right = Object.values(b)[index].toUpperCase();
-      if (left < right) {
-        return -1;
-      }
-      if (left > right) {
-        return 1;
-      }
-
-      // names must be equal
-      return 0;
-    });
-  };
-
-  const handleClear = () => {};
   return (
     <div className="container p-20 bg-light">
-      <ModalDelete onHide={handleDelete} show={showModal} onSave={handleSave} />
+      {showModal && (
+        <ModalDelete data={payrolls[indexChoosed]} onHide={handleDelete} show={showModal} onSave={handleSave} />
+      )}
+      {showDetailModal && (
+        <ModalViewDetail
+          data={{
+            ...payrolls[indexChoosed],
+            fees: totalField[indexChoosed].fees,
+            volume_input_in_input_currency: totalField[indexChoosed].volume_input_in_input_currency,
+          }}
+          onHide={handleHideDetail}
+          show={showDetailModal}
+          onSave={handleSaveDetail}
+        />
+      )}
       <div className="body">
         <div className="d-flex justify-content-between" style={{ marginTop: 20 }}>
           <div style={{ color: '#2D53B8', fontWeight: 700, fontSize: 'large' }}>Payroll Transaction List</div>
@@ -123,37 +227,62 @@ const PayrollPage = () => {
             <option value="">Export Excel</option>
           </select>
         </div>
-        <div className="d-flex justify-content-between" style={{ marginTop: 20 }}>
-          <Selector
-            data={Object.values(status)}
-            style={{ width: 130 }}
-            onChange={handleChangeSelectStatus}
-            placeholder="Status"
-          />
-          <Selector
-            data={Object.values(status)}
-            style={{ width: 130 }}
-            placeholder="Client"
-            onChange={handleChangeSelectClient}
-          />
+        <form action="" onChange={handleChangeForm}>
+          <div className="d-flex justify-content-between" style={{ marginTop: 20 }}>
+            <Selector
+              id="Status"
+              data={Object.values(status)}
+              style={{ width: 130 }}
+              onChange={handleChangeValueForm}
+              placeholder="Status"
+              value={formFilter.status}
+            />
+            <Selector
+              id="Client"
+              value={formFilter.client}
+              data={[]}
+              style={{ width: 130 }}
+              placeholder="Client"
+              onChange={handleChangeValueForm}
+            />
 
-          <DatePicker onChange={handleChangeDateFrom} value={dateValueFrom} placeholder={'From'} />
-          <DatePicker onChange={handleChangeDateTo} value={dateValueTo} min={dateValueFrom} placeholder="To" />
+            <DatePicker id="From" onChange={handleChangeValueForm} value={formFilter.date_begin} placeholder={'From'} />
+            <DatePicker
+              id="To"
+              onChange={handleChangeValueForm}
+              value={formFilter.date_end}
+              min={formFilter.date_begin}
+              placeholder="To"
+            />
 
-          <input style={{ width: 165 }} type={'text'} className="form-control" placeholder="Invoices #" />
+            <input
+              id="Invoice"
+              onChange={handleChangeValueForm}
+              value={formFilter.invoice}
+              style={{ width: 165 }}
+              type={'text'}
+              className="form-control"
+              placeholder="Invoices #"
+            />
 
-          <button type="button" className="btn btn-outline-primary" style={{ paddingRight: 35, paddingLeft: 35 }}>
-            Apply
-          </button>
-          <button
-            onClick={handleClear}
-            type="button"
-            className="btn btn-outline-danger"
-            style={{ paddingRight: 35, paddingLeft: 35 }}
-          >
-            Clear
-          </button>
-        </div>
+            <button
+              onClick={handleApply}
+              type="button"
+              className="btn btn-outline-primary"
+              style={{ paddingRight: 35, paddingLeft: 35 }}
+            >
+              Apply
+            </button>
+            <button
+              onClick={handleClear}
+              type="button"
+              className="btn btn-outline-danger"
+              style={{ paddingRight: 35, paddingLeft: 35 }}
+            >
+              Clear
+            </button>
+          </div>
+        </form>
         <table className="table table-hover table-borderless">
           <thead>
             <tr>
@@ -170,10 +299,10 @@ const PayrollPage = () => {
                 <td>
                   <div style={{ color: validColorStatus(element.status) }}>{element.status}</div>
                 </td>
-                <td>{element.date}</td>
+                <td>{validDate(element.date)}</td>
+                <td>{validTotal(element.total)}</td>
                 <td>{element.client}</td>
                 <td>{element.currency}</td>
-                <td>{element.total}</td>
                 <td>
                   <div className="text-truncate" style={{ width: 170 }}>
                     {element.invoice}
@@ -183,6 +312,7 @@ const PayrollPage = () => {
                   <button
                     className="form-select btn-outline-secondary"
                     style={{ width: 130, color: 'black', borderColor: 'black', borderRadius: 30, marginLeft: 10 }}
+                    onClick={handleViewDetail(index)}
                   >
                     View Detail
                   </button>

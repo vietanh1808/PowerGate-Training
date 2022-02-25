@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { Action } from 'typesafe-actions';
@@ -27,6 +27,7 @@ const PhotoPage = (props: Props) => {
   const [loadingPage, setLoadingPage] = useState(false);
   const [disableButton, setDisableButton] = useState(true);
   const [currentIndexItem, setCurrentIndexItem] = useState(0);
+  const [clientHeight, setClientHeight] = useState(0);
 
   const handleConfirm = () => {
     const newItems = [...clonePhoto];
@@ -55,17 +56,6 @@ const PhotoPage = (props: Props) => {
     setClonePhoto(photo);
   };
 
-  const listenToScroll = useCallback(() => {
-    const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
-    const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-    const scrolled = winScroll / height;
-
-    if (scrolled === 1) {
-      // position is End of Page
-      fetchData();
-    }
-  }, []);
-
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
@@ -86,7 +76,18 @@ const PhotoPage = (props: Props) => {
     } catch (error) {
       console.log(error);
     }
-  }, [dispatch]);
+  }, []);
+
+  const listenToScroll = useCallback(() => {
+    const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+    const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+    const scroll = winScroll / height;
+    console.log(document.documentElement.clientHeight);
+    if (scroll === 1) {
+      // position is End of Page
+      fetchData();
+    }
+  }, [document.documentElement.clientHeight]);
 
   const handleLogout = () => {
     setLoading(true);
@@ -108,7 +109,7 @@ const PhotoPage = (props: Props) => {
     return () => {
       window.removeEventListener('scroll', listenToScroll);
     };
-  }, []);
+  }, [listenToScroll]);
 
   return (
     <div className="container mt-3 justify-content-center" style={{ width: '100%', maxWidth: 500, borderWidth: 1 }}>

@@ -39,4 +39,4 @@ const ListItem = (props: Props) => {
   );
 };
 
-export default ListItem;
+export default memo(ListItem);

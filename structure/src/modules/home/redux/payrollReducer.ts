@@ -1,54 +1,24 @@
 import { ActionType, createCustomAction, getType } from 'typesafe-actions';
 import { IPayrollItem, IPayrollParams } from '../../../models/payroll';
 
-export interface IPayroll {
+export interface PayrollState {
   payroll: Array<IPayrollItem>,
 }
 
-export const setPayroll = (payroll: Array<IPayrollParams>) => {
+export const setPayroll = (payroll: Array<IPayrollItem>) => {
   return setPayrollAction(payroll);
 };
 
-const setPayrollAction = createCustomAction('payroll/setPayroll', (payroll: Array<IPayrollParams>) => ({
+const setPayrollAction = createCustomAction('payroll/setPayroll', (payroll: Array<IPayrollItem>) => ({
     payroll
   }));
 
-const setStatusAction = createCustomAction('payroll/setStatus', (status: string, index: number) => ({
-  index,
-  status
-}));
-
-const setDateAction = createCustomAction('payroll/setDate', (date: string, index: number) => ({
-  index,
-  date
-}));
-
-const setClientAction = createCustomAction('payroll/setClient', (client: string, index: number) => ({
-  index,
-  client
-}));
-
-const setCurrencyAction = createCustomAction('payroll/setCurrency', (currency: string, index: number) => ({
-  index,
-  currency
-}));
-
-const setTotalAction = createCustomAction('payroll/setTotal', (total: number, index: number) => ({
-  index,
-  total
-}));
-
-const setInvoiceAction = createCustomAction('payroll/setInvoice', (invoice: string, index: number) => ({
-  index,
-  invoice
-}));
-
-const actions = { setPayrollAction, setDateAction, setClientAction, setCurrencyAction, setTotalAction, setInvoiceAction, setStatusAction };
+const actions = { setPayrollAction};
 
 type Action = ActionType<typeof actions>;
 
 export default function reducer(
-  state: IPayroll = {
+  state: PayrollState = {
     payroll: [],
   }, 
   action: Action,
@@ -56,18 +26,6 @@ export default function reducer(
   switch (action.type) {
     case getType(setPayrollAction):
       return  { ...state, payroll: action.payroll };
-    case getType(setStatusAction):
-      return  { ...state, };
-    case getType(setDateAction):
-      return  { ...state, payroll: action.date };
-    case getType(setClientAction):
-      return  { ...state, payroll: action.client };
-    case getType(setCurrencyAction):
-      return  { ...state, payroll: action.currency };
-    case getType(setTotalAction):
-      return  { ...state, payroll: action.total };
-    case getType(setInvoiceAction):
-      return  { ...state, payroll: action.invoice };
     default:
       return state;
   }

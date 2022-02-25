@@ -5,10 +5,11 @@ interface Props {
   onChange: (event: any) => void;
   min?: string;
   placeholder?: string;
+  id: string;
 }
 
 const DatePicker = (props: Props) => {
-  const { value, onChange, min, placeholder } = props;
+  const { value, onChange, min, placeholder, id } = props;
   const [typeInput, setTypeInput] = useState('text');
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -22,6 +23,7 @@ const DatePicker = (props: Props) => {
 
   return (
     <input
+      id={id}
       ref={inputRef}
       min={min}
       className="form-input"

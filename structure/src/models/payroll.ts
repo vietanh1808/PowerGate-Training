@@ -67,7 +67,18 @@ export interface IDateValidate {
     time_created: string
 }
 
-export interface ITotalValidate {
+export interface ITotal {
+    fees: number,
+    volume_input_in_input_currency: number
+}
+
+export interface IUpdatePayroll {
+    status: string,
+    date: string,
+    client: string,
+    currency: string,
+    total: number,
+    invoice: string,
     fees: number,
     volume_input_in_input_currency: number
 }

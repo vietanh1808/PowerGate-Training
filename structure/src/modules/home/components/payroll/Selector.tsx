@@ -5,13 +5,15 @@ interface Props {
   data: Array<string>;
   onChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void;
   placeholder?: string;
+  value: string;
+  id: string;
 }
 
 const Selector = (props: Props) => {
-  const { style, data, onChange, placeholder } = props;
+  const { style, data, onChange, placeholder, value, id } = props;
 
   return (
-    <select className="form-select" style={style} onChange={onChange}>
+    <select id={id} value={value} className="form-select" style={style} onChange={onChange}>
       <option value={''} selected hidden>
         {placeholder}
       </option>
