@@ -7,7 +7,7 @@ const HomePage = lazy(() => import('./modules/home/pages/HomePage'));
 const ContactPage = lazy(() => import('./modules/home/pages/ContactPage'));
 const LoginPage = lazy(() => import('./modules/auth/pages/LoginPage'));
 const RegisterPage = lazy(() => import('./modules/home/pages/RegisterPage'));
-const UserDetailPage = lazy(() => import('./modules/home/pages/UserDetailPage'));
+const ProfilePage = lazy(() => import('./modules/home/pages/ProfilePage'));
 const PayrollPage = lazy(() => import('./modules/home/pages/PayrollPage'));
 const PhotoPage = lazy(() => import('./modules/home/pages/PhotoPage'));
 
@@ -24,7 +24,7 @@ export const Routes = (props: Props) => {
         <Route path={ROUTES.contact} component={ContactPage} />
         <Route path={ROUTES.photo} component={PhotoPage} />
         <Route path={ROUTES.register} component={RegisterPage} />
-        <Route path={ROUTES.detailUser} component={UserDetailPage} />
+        <Route path={ROUTES.detailUser} component={ProfilePage} />
         <Route path={ROUTES.payroll} component={PayrollPage} />
         <Route path="/" component={LoginPage} />
       </Switch>
